@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require('lodash');
+
 /**
  * Gets a user from their id in the URL.
  *
