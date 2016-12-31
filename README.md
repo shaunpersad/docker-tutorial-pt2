@@ -207,7 +207,7 @@ npm install async lodash express body-parser mongoose redis elasticsearch react 
 The above are the libraries that our app will need.
 
 
-## Step 4 - Writing more useful source code
+## Step 4 - A better app
 
 We're going to create a "simple" registry of people. We should be able to add, search for, and display people. 
 We will submit people via a form, send it to an express app, which will then save it in MongoDB, and mirror it in Elasticsearch.
@@ -215,7 +215,7 @@ Whenever we search for someone, the express app will hit Elasticsearch for the r
 MongoDB is playing a fairly useless middleman, though in real apps that ususually is not the case, as you tend to not want Elasticsearch
 as your primary database.
 
-This part of the tutorial is focusing only on the front-end, so we won't worry about React and the build process just yet.
+This part of the tutorial is focusing only on the back-end, so we won't worry about React and the build process just yet.
 
 ### Organization
 
@@ -223,10 +223,12 @@ To better organize our codebase that's about to explode with new stuff, let's ad
 In it, we will have the following directories and files:
 - *src*
     - *api*: API route handlers
-        - *createUser*: POST /users to create a user
+        - *createUser*: POST /users/create to create a user
+        - *editUser*: POST|PUT /users/{userId}/edit to edit a user
         - *getUser*: GET /users/{userId} to get a specific user
         - *getUsers*: GET /users with optional ?search={query} to get a list of users
-    - *models*: Database models
+        - *removeUser*: POST|DELETE /users/{userId}/remove to remove a user
+    - *models*: Database models and tying all three database services together
         - *getUserModel: gets the User model from Mongoose
     - *services*: wrappers around our external services (MongoDB, Elasticsearch, Redis)
         - *elasticsearch*: will create an Elasticsearch connection, and create mappings if necessary
@@ -250,4 +252,217 @@ ready when our app starts. In fact, they usually never are, as they require star
 will result in errors, so we need a mechanism that will allow us to wait for these services to be ready before we do anything meaningful in our app.
 
 So, our `healthCheck` does just that. Feel free to inspect the code, but to spare you the suspense, it simply repeatedly attempts to make
-connections to your external services until it succeeds, at which point it calls the callback, which in our case, .
+connections to your external services until it succeeds, at which point it calls the callback, which in our case, sets up our routes.
+
+### Connecting to other containers
+
+Recall that earlier we mentioned that "the service names we use in `docker-compose.yml` can actually be used as the hostnames of those containers to connect to them".
+
+As an example, if you create a service names "my-service" in your `docker-compose.yml`, other containers can make requests to "http://my-service:{some_exposed_port}" to talk to it!
+
+This concept is used in the functions found in `src/services` to connect to MongoDB, Elasticsearch, and Redis.
+
+Mongo:
+```js
+mongoose.connect('mongodb://tutorial-mongo/docker_tutorial');
+```
+Elasticsearch:
+```js
+const client = new elasticsearch.Client({
+    host: 'tutorial-elasticsearch:9200',
+    log: []
+});
+```
+Redis:
+```js
+const client = redis.createClient({
+    host: 'tutorial-redis'
+});
+```
+Also notice that in our `docker-compose.yml`, we've got some port definitions to expose the default ports for these services.
+It doesn't matter that we're using the default ports in our code (and in the case of Elasticsearch, we actually hard-code it),
+because by default, our containers create their own private network. Only MongoDB and Redis are explicitly accessible
+to the outside world, because we've defined ports on our host to talk to them, but we can change these ports to anything we wish,
+without having to change our source code.
+
+For example, for Elasticsearch, we have this:
+```yaml
+    ports:
+      - '9200:9200'
+```
+We could change it to this:
+```yaml
+    ports:
+      - '5000:9200'
+```
+Which would not affect our source at all, because the containers would still be able to talk to it at 9200, but if we wanted to talk to Elasticsearch from our host, we'd have to use 5000 instead.
+
+### Writing the code
+
+I encourage you to explore each file in this project, starting from `index.js`, and tracing things to the `src` directory.
+
+The gist of what happens is as follows: 
+- We connect to our services, then assign our routes and handles with express.
+- API requests will come in and act upon the User model we have defined. 
+    - Using Mongoose's model events, we can trigger things to happen whenever a model is created, edited, or deleted.
+    - This allows us to sync our data between MongoDB, Elasticsearch, and Redis.
+    - Whenever a model is created or edited, its data is automatically put into Elasticsearch, and the relevant Redis caches are cleared.
+    - Whenever a model is deleted, its data is automatically removed from Elasticsearch, and the relevant Redis caches are cleared.
+
+### Exposing a port
+
+The app we're writing is a web server, so we need to provide it with a port to listen to. The source code in `index.js` is asking for 8080, so let's give it:
+```yaml
+  app:
+    build: .
+    image: shaunpersad/docker-tutorial
+    command: nodemon index.js
+    environment:
+      NODE_ENV: development
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/usr/src/app
+    links:
+      - tutorial-mongo
+      - tutorial-redis
+      - tutorial-elasticsearch
+```
+Notice also the new "environment" variables. It's just good practice to define the NODE_ENV explicitly.
+In a later tutorial we'll see how to extend `docker-compose.yml` for dev, staging, and production.
+
+Your new `docker-compose.yml` should now look like:
+```yaml
+version: '2'
+services:
+  tutorial-mongo:
+    image: mongo:3.4.1
+    ports:
+      - '27017:27017'
+  tutorial-redis:
+    image: redis:3.2.6
+    ports:
+      - '6379'
+  tutorial-elasticsearch:
+    image: elasticsearch:5.1.1
+    ports:
+      - '9200:9200'
+  app:
+    build: .
+    image: shaunpersad/docker-tutorial
+    command: nodemon index.js
+    environment:
+      NODE_ENV: development
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/usr/src/app
+    links:
+      - tutorial-mongo
+      - tutorial-redis
+      - tutorial-elasticsearch
+```
+
+## Step 5 - Using the API
+
+Once all the code is in place, it's the moment of truth. Run `docker-compose up`, and watch the magic happen.
+
+You'll probably see a lot of console output. Containers tend to be noisy on startup, and we've got 3 big technologies all starting up at the same time.
+If everything went according to plan, one of the last outputs you should see should be:
+```bash
+app_1                     | Listening on 8080.
+```
+If this is true, hooray, your app is up!
+
+Navigate to `http://localhost:8080`, and you'll be presented with our old friend "Hello world!".
+
+At this point, you may want to turn off the extra logs from the other noisy containers. You can do that with:
+```yaml
+    logging:
+      driver: "none"
+```
+
+Your final `docker-compose.yml` should then be:
+
+```yaml
+version: '2'
+services:
+  tutorial-mongo:
+    image: mongo:3.4.1
+    ports:
+      - '27017:27017'
+    logging:
+      driver: "none"
+  tutorial-redis:
+    image: redis:3.2.6
+    ports:
+      - '6379'
+    logging:
+      driver: "none"
+  tutorial-elasticsearch:
+    image: elasticsearch:5.1.1
+    ports:
+      - '9200:9200'
+    logging:
+      driver: "none"
+  app:
+    build: .
+    image: shaunpersad/docker-tutorial
+    command: nodemon index.js
+    environment:
+      NODE_ENV: development
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/usr/src/app
+    links:
+      - tutorial-mongo
+      - tutorial-redis
+      - tutorial-elasticsearch
+```
+
+Now you're free to try out the API. Fire up [Postman](https://www.getpostman.com/) or some other REST client, and start making requests!
+
+#### Create a user
+
+We've got no data, so let's make some.
+
+URL: http://localhost:8080/users/create BODY: firstName = Shaun, lastName = Persad
+```bash
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'firstName=Shaun&lastName=Persad' "http://localhost:8080/users/create"
+```
+
+#### Get all users
+URL: http://localhost:8080/users
+```bash
+curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localhost:8080/users"
+```
+Try repeating this request. The second time around should be faster, since it will be cached in Redis.
+
+#### Create another user
+URL: http://localhost:8080/users/create BODY: firstName = Tim, lastName = Coker
+```bash
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'firstName=Tim&lastName=Coker' "http://localhost:8080/users/create"
+```
+
+#### Search users
+URL: http://localhost:8080/users QUERY: search = Sh
+```bash
+curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localhost:8080/users?search=sh"
+```
+Try repeating this request. The second time around should be faster, since it will be cached in Redis.
+
+You get the picture!
+
+
+## Congratulations!
+
+You survived Part 2! It was intense, but you can now say you've successfully created a complex back-end system using Docker Compose.
+All it takes to run is a single command too! Try editing the source code while the app is running. Nodemon will do its thing and reload the app automatically.
+No more rebuilding the image each time!
+
+The best part is whoever pulls down your completed source code can build everything all at once and run it, just by running `docker-compose up`.
+
+It's pretty awesome, isn't it?
+
+In Part 3, we'll explore a front-end workflow. Stay tuned!
