@@ -299,7 +299,7 @@ Which would not affect our source at all, because the containers would still be 
 
 ### Writing the code
 
-I encourage you to explore each file in this project, starting from `index.js`, and tracing things to the `src` directory.
+I encourage you to explore each file in this project, starting from `index.js`, and tracing things to the `src` directory. When you're done, copy the `src` directory and the `index.js` file from this project into your own, and you're good to go!
 
 The gist of what happens is as follows: 
 - We connect to our services, then assign our routes and handles with express.
