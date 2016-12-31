@@ -221,24 +221,24 @@ This part of the tutorial is focusing only on the back-end, so we won't worry ab
 
 To better organize our codebase that's about to explode with new stuff, let's add a `src` directory.
 In it, we will have the following directories and files:
-- *src*
-    - *api*: API route handlers
-        - *createUser*: POST /users/create to create a user
-        - *editUser*: POST|PUT /users/{userId}/edit to edit a user
-        - *getUser*: GET /users/{userId} to get a specific user
-        - *getUsers*: GET /users with optional ?search={query} to get a list of users
-        - *removeUser*: POST|DELETE /users/{userId}/remove to remove a user
-    - *models*: Database models and tying all three database services together
-        - *getUserModel: gets the User model from Mongoose
-    - *services*: wrappers around our external services (MongoDB, Elasticsearch, Redis)
+- *src/*
+    - *api/*: API route handlers
+        - *createUser.js*: POST /users/create to create a user
+        - *editUser.js*: POST|PUT /users/{userId}/edit to edit a user
+        - *getUser.js*: GET /users/{userId} to get a specific user
+        - *getUsers.js*: GET /users with optional ?search={query} to get a list of users
+        - *removeUser.js*: POST|DELETE /users/{userId}/remove to remove a user
+    - *models/*: Database models and tying all three database services together
+        - *getUserModel.js: gets the User model from Mongoose
+    - *services/*: wrappers around our external services (MongoDB, Elasticsearch, Redis)
         - *elasticsearch*: will create an Elasticsearch connection, and create mappings if necessary
-        - *mongo*: will create a MongoDB connection
-        - *redis*: will create a Redis connection
-    - *utils*: utility functions
-        - *apiResponse*: will respond to API requests with JSON, and handle errors appropriately
-        - *healthCheck*: will wait for our external services to be ready before allowing the app to proceed
-        - *remember*: will allow us to easily store data in Redis
-        - *unRemember*: will allow us to easily remove data from Redis
+        - *mongo.js*: will create a MongoDB connection
+        - *redis.js*: will create a Redis connection
+    - *utils/*: utility functions
+        - *apiResponse.js*: will respond to API requests with JSON, and handle errors appropriately
+        - *healthCheck.js*: will wait for our external services to be ready before allowing the app to proceed
+        - *remember.js*: will allow us to easily store data in Redis
+        - *unRemember.js*: will allow us to easily remove data from Redis
 - *index.js*: Still our entry point into the app.
 
 This is by no means a large-scale framework, but it will do the job in a non-cluttered, reasonable way.
