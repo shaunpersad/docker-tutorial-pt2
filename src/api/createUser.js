@@ -12,9 +12,9 @@ function createUser(app) {
 
     return function(req, res) {
 
-        const user = _.get(req, 'body', {});
+        const props = _.get(req, 'body', {});
 
-        app.models.User.create(user, (err, user) => {
+        app.models.User.create(props, (err, user) => {
 
             app.utils.apiResponse(res, err, user);
         });
