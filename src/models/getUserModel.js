@@ -27,7 +27,7 @@ const UserSchema = mongoose.Schema({
 });
 
 /**
- * Only unique people plz.
+ * Only unique ppl plz.
  */
 UserSchema.index({
     firstName: 1,
