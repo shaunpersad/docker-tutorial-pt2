@@ -212,7 +212,7 @@ The above are the libraries that our app will need.
 We're going to create a "simple" registry of people. We should be able to add, search for, and display people. 
 We will submit people via a form, send it to an express app, which will then save it in MongoDB, and mirror it in Elasticsearch.
 Whenever we search for someone, the express app will hit Elasticsearch for the results, and cache it in Redis. With this simplistic of an app,
-MongoDB is playing a fairly useless middleman, though in real apps that ususually is not the case, as you tend to not want Elasticsearch
+MongoDB is playing a fairly useless middleman, though in real apps that usually is not the case, as you tend to not want Elasticsearch
 as your primary database.
 
 This part of the tutorial is focusing only on the back-end, so we won't worry about React and the build process just yet.
