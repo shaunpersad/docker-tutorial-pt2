@@ -83,11 +83,11 @@ function createUserIndex(client, callback) {
  */
 function setupElasticsearch(callback) {
 
-    console.log('Setting up Elasticsearch.');
+    console.log('Attempting to connect to Elasticsearch.');
 
     const client = new elasticsearch.Client({
         host: 'tutorial-elasticsearch:9200',
-        //log: 'info'
+        log: []
     });
 
     async.waterfall([
@@ -96,8 +96,10 @@ function setupElasticsearch(callback) {
                 // ping usually has a 3000ms timeout
                 requestTimeout: Infinity
             }, (err) => {
-                // we're connected!
-                console.log('Connected to Elasticsearch.');
+                if (!err) {
+                    // we're connected!
+                    console.log('Connected to Elasticsearch.');
+                }
                 next(err, client);
             });
         },

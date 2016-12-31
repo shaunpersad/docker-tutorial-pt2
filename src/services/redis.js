@@ -8,7 +8,7 @@ const redis = require('redis');
  */
 function setupRedis(callback) {
 
-    console.log('Setting up Redis.');
+    console.log('Attempting to connect to Redis.');
 
     const client = redis.createClient(6379, 'tutorial-redis');
 

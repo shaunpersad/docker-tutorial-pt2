@@ -24,9 +24,8 @@ services:
     command: nodemon index.js
     environment:
       NODE_ENV: development
-    restart: always
     ports:
-      - '3000:8080'
+      - '8080:8080'
     volumes:
       - .:/usr/src/app
     links:
