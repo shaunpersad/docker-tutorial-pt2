@@ -1,7 +1,9 @@
 "use strict";
+
 const _ = require('lodash');
 
 /**
+ * A bit self-explanatory really.
  *
  * @param app
  * @returns {Function}

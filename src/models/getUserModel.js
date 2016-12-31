@@ -4,6 +4,15 @@ const _ = require('lodash');
 const async = require('async');
 const mongoose = require('mongoose');
 
+
+/**
+ * Here's where we define our user database model.
+ * We also have our model events here,
+ * which are invaluable in synchronizing our data between MongoDB, Elasticsearch, and Redis.
+ * Without these events, all is lost.
+ * Luckily, we have them, so each call to create, update, or remove a user is automatically
+ * reflected in all three services.
+ */
 const UserSchema = mongoose.Schema({
     firstName: {
         type: String,
@@ -17,6 +26,9 @@ const UserSchema = mongoose.Schema({
     }
 });
 
+/**
+ * Only unique people plz.
+ */
 UserSchema.index({
     firstName: 1,
     lastName: 1
@@ -24,17 +36,18 @@ UserSchema.index({
     unique: true
 });
 
-// TODO: Transform these errors to better ones.
-
+/**
+ * Convert mongo errors to nicer errors.
+ */
 UserSchema.post('save', function(err, doc, next) {
 
     if (err.name === 'MongoError' && err.code === 11000) {
 
-        next(err);
+        next(new Error('This user already exists.'));
 
     } else if (err.name === 'ValidationError') {
 
-        next(err);
+        next(new Error('Please fill out all fields.'));
 
     } else {
         next(err);
@@ -48,10 +61,17 @@ UserSchema.post('save', function(err, doc, next) {
  */
 function getUserModel(app) {
 
+    /**
+     * Each time a new user is successfully created or updated,
+     * put them into Elasticsearch, and also delete all caches.
+     */
     UserSchema.post('save', function(user, done) {
 
         async.series([
             (next) => {
+                /**
+                 * Put them in ES!
+                 */
                 app.services.elasticsearch.index({
                     index: 'docker-tutorial',
                     type: 'users',
@@ -66,21 +86,50 @@ function getUserModel(app) {
                 }, next);
             },
             (next) => {
+                /**
+                 * Delete that specific user's entry from Redis.
+                 */
                 app.services.redis.del(`users:${user.id}`, next);
             },
             (next) => {
+                /**
+                 * Delete all search results from Redis.
+                 */
                 app.utils.unRemember(app, 'searches*', next);
             }
         ], done);
     });
 
-    UserSchema.pre('remove', function(next) {
+    /**
+     * If a user is removed from the database,
+     * remove them from Elasticsearch and Redis as well plz.
+     */
+    UserSchema.post('remove', function(user, done) {
 
-        app.services.elasticsearch.delete({
-            index: 'docker-tutorial',
-            id: this.id,
-            type: 'users'
-        }, next);
+        async.series([
+            (next) => {
+                /**
+                 * Get them out of ES!
+                 */
+                app.services.elasticsearch.delete({
+                    index: 'docker-tutorial',
+                    id: user.id,
+                    type: 'users'
+                }, next);
+            },
+            (next) => {
+                /**
+                 * Delete that specific user's entry from Redis.
+                 */
+                app.services.redis.del(`users:${user.id}`, next);
+            },
+            (next) => {
+                /**
+                 * Delete all search results from Redis.
+                 */
+                app.utils.unRemember(app, 'searches*', next);
+            }
+        ], done);
     });
 
     return mongoose.model('User', UserSchema);

@@ -4,7 +4,6 @@
  * Libraries
  */
 const _ = require('lodash');
-const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
 
@@ -12,8 +11,10 @@ const bodyParser = require('body-parser');
  * API
  */
 const createUser = require('./src/api/createUser');
+const editUser = require('./src/api/editUser');
 const getUser = require('./src/api/getUser');
 const getUsers = require('./src/api/getUsers');
+const removeUser = require('./src/api/removeUser');
 
 /**
  * Models
@@ -41,34 +42,50 @@ const utils = {
 };
 
 /**
- * Setup web server
- */
-
-/**
- * {{services:{elasticsearch:*, mongo:*, redis:*}, utils:{apiResponse:*,healthCheck:*,rememberSearch:*}, models:{User:*}}}
+ * Express!
  */
 const app = express();
 
+/**
+ * Wait for MongoDB, Elasticsearch, and Redis to start before proceeding.
+ */
 utils.healthCheck(services, {}, (err, services) => {
 
+    /**
+     * If there's still an error even after waiting,
+     * something terrible has happened and we should not continue.
+     */
     if (err) {
         throw err;
     }
 
+    /**
+     * We need these middlewares to be able to parse our incoming POST API requests.
+     */
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
 
+    /**
+     * Set all our src stuff to the app object, so we can just pass that around.
+     */
     app.services = services;
     app.utils = utils;
     app.models = {
         User: getUserModel(app)
     };
 
+    /**
+     * Modularize the API routes as a separate router.
+     */
     const usersApi = express.Router();
 
+    usersApi.post('/create', createUser(app));
+    usersApi.put('/:userId/edit', editUser(app));
+    usersApi.post('/:userId/edit', editUser(app)); // for browsers
+    usersApi.delete('/:userId/remove', removeUser(app));
+    usersApi.post('/:userId/remove', removeUser(app)); // for browsers
     usersApi.get('/:userId', getUser(app));
     usersApi.get('/', getUsers(app));
-    usersApi.post('/', createUser(app));
 
     app.use('/users', usersApi);
 

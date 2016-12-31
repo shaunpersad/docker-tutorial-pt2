@@ -9,7 +9,7 @@ Docker or Docker Compose.
 
 Now, we're going to skip a few steps and dive straight into a more real-world app, complete with MongoDB, Redis, and Elasticsearch on the back-end.
 
-In part 3, we will set up a full build process with Gulp, Browserify, React, and SCSS on the front-end. Oh, and tests!
+In Part 3, we will set up a full build process with Gulp, Browserify, React, and SCSS on the front-end. Oh, and tests!
 
 Normally, it takes quite a bit of time to set up and install all these various technologies and to get it working properly on your host.
 With Docker Compose, all of this will take minutes, and will work across all your team members.
@@ -34,13 +34,13 @@ Using [Nodemon](https://github.com/remy/nodemon) and [mounting a volume](https:/
 Nodemon listens for changes to your source code, and reloads your app. It even knows when you add new files and directories. One limitation that I did notice was that
 it did not know when files were deleted.
 
-A data volume is a means of persisting data for a container. It also acts as a shared folder from host to container. In Part 1 we were just coping the source code to the container,
+A data volume is a means of persisting data for a container. It also acts as a shared folder from host to container. In Part 1 we were just copying the source code to the container,
 but now we've given the container a place on our host to access the source directly. This is also beneficial for file watching.
 
-One of the biggest problems our team begun to have with one of our largest apps was file watching inside of a VM...it was slow. Super slow. 10-30 seconds slow.
+With Vagrant, one of the biggest problems our team begun to have with one of our largest apps was file watching inside of a VM...it was slow. Super slow. 10-30 seconds slow.
 The reason for this slowness was that the VM could not use the host's native OS file watching, and therefore had to poll all of the files it watched.
 
-Docker data volumes don't have this limitation. Nodemon and any other file watchers (which we will implement in Part 3) are free to use the host OS's file watching.
+Docker data volumes don't have this limitation. Nodemon and any other file watchers (which we will implement in Part 3 for our build process) are free to use the host OS's file watching.
 
 ### Adding nodemon
 
@@ -144,8 +144,6 @@ If you're wondering where to find the names of the images you need, welcome to [
 
 ### Accessing these services
 
-#### Externally
-
 Typically when you're working with tech like MongoDB, Elasticsearch, and Redis, you'll want to access them to view and modify
 their data directly.  E.g. visualizing your data in a GUI like MongoHub, or running commands in a CLI.
 
@@ -171,7 +169,7 @@ then we're going to start *another instance* of that redis container, but execut
 ```bash
 docker-compose run tutorial-redis redis-cli -h tutorial-redis
 ```
-The above says to run docker-compose {service} {command}, where the {service} is our defined "tutorial-redis",
+The above says `docker-compose run {service} {command}`, where the {service} is our defined "tutorial-redis",
 and the command is `redis-cli`. The "-h" flag is actually a flag on `redis-cli`, not `docker-compose`, and it tells `redis-cli`
 to use "tutorial-redis" as the hostname (instead of localhost, as is default).
 
@@ -189,6 +187,7 @@ The above concept also works to connect to the mongo shell:
 docker-compose run tutorial-mongo mongo --host tutorial-mongo
 ```
 For convenience, this command is saved in the `scripts` directory as `mongo-shell.sh`.
+
 
 ## Step 3 - Installing some new packages
 
@@ -221,3 +220,34 @@ This part of the tutorial is focusing only on the front-end, so we won't worry a
 ### Organization
 
 To better organize our codebase that's about to explode with new stuff, let's add a `src` directory.
+In it, we will have the following directories and files:
+- *src*
+    - *api*: API route handlers
+        - *createUser*: POST /users to create a user
+        - *getUser*: GET /users/{userId} to get a specific user
+        - *getUsers*: GET /users with optional ?search={query} to get a list of users
+    - *models*: Database models
+        - *getUserModel: gets the User model from Mongoose
+    - *services*: wrappers around our external services (MongoDB, Elasticsearch, Redis)
+        - *elasticsearch*: will create an Elasticsearch connection, and create mappings if necessary
+        - *mongo*: will create a MongoDB connection
+        - *redis*: will create a Redis connection
+    - *utils*: utility functions
+        - *apiResponse*: will respond to API requests with JSON, and handle errors appropriately
+        - *healthCheck*: will wait for our external services to be ready before allowing the app to proceed
+        - *remember*: will allow us to easily store data in Redis
+        - *unRemember*: will allow us to easily remove data from Redis
+- *index.js*: Still our entry point into the app.
+
+This is by no means a large-scale framework, but it will do the job in a non-cluttered, reasonable way.
+
+### Health Check
+
+Inspect `index.js`. In it, we start out by `require`ing our libraries, and then all our `src` items. Then we get to this `util.healthCheck` function.
+
+Remember that with Docker Compose, we are able to start all our containers at the same time. One side effect of this behavior is that not all our services will be
+ready when our app starts. In fact, they usually never are, as they require startup time. Attempting to start your app without these connections
+will result in errors, so we need a mechanism that will allow us to wait for these services to be ready before we do anything meaningful in our app.
+
+So, our `healthCheck` does just that. Feel free to inspect the code, but to spare you the suspense, it simply repeatedly attempts to make
+connections to your external services until it succeeds, at which point it calls the callback, which in our case, .

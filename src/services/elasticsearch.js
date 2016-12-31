@@ -4,6 +4,7 @@ const async = require('async');
 const elasticsearch = require('elasticsearch');
 
 /**
+ * Our schema for Elasticsearch
  *
  * @param client
  * @param callback
@@ -78,6 +79,7 @@ function createUserIndex(client, callback) {
 }
 
 /**
+ * Attempt to connect.
  *
  * @param callback
  */
@@ -85,8 +87,12 @@ function setupElasticsearch(callback) {
 
     console.log('Attempting to connect to Elasticsearch.');
 
+    /**
+     * P.S. It's okay that we've hard-coded the 9200 port.
+     * With Docker, we can forward to that port from any other port.
+     */
     const client = new elasticsearch.Client({
-        host: 'tutorial-elasticsearch:9200',
+        host: 'tutorial-elasticsearch:9200', // Docker allows our service name to act as the URL to connect to that container!
         log: []
     });
 

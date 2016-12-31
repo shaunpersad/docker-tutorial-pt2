@@ -3,6 +3,7 @@
 const redis = require('redis');
 
 /**
+ * Attempt to connect.
  *
  * @param callback
  */
@@ -10,7 +11,9 @@ function setupRedis(callback) {
 
     console.log('Attempting to connect to Redis.');
 
-    const client = redis.createClient(6379, 'tutorial-redis');
+    const client = redis.createClient({
+        host: 'tutorial-redis' // Docker allows our service name to act as the URL to connect to that container!
+    });
 
     client.once('error', callback);
 
