@@ -12,7 +12,7 @@ function createUser(app) {
 
     return function(req, res) {
 
-        const props = _.get(req, 'body', {});
+        const props = _.pick(_.get(req, 'body', {}), ['firstName', 'lastName']);
 
         app.models.User.create(props, (err, user) => {
 
