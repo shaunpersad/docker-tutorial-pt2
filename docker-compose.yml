@@ -1,0 +1,35 @@
+version: '2'
+services:
+  tutorial-mongo:
+    image: mongo:3.4.1
+    ports:
+      - '27017:27017'
+    logging:
+      driver: "none"
+  tutorial-redis:
+    image: redis:3.2.6
+    ports:
+      - '6379'
+    logging:
+      driver: "none"
+  tutorial-elasticsearch:
+    image: elasticsearch:5.1.1
+    ports:
+      - '9200:9200'
+    logging:
+      driver: "none"
+  app:
+    build: .
+    image: shaunpersad/docker-tutorial
+    command: nodemon index.js
+    environment:
+      NODE_ENV: development
+    restart: always
+    ports:
+      - '3000:8080'
+    volumes:
+      - .:/usr/src/app
+    links:
+      - tutorial-mongo
+      - tutorial-redis
+      - tutorial-elasticsearch

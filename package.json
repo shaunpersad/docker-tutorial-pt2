@@ -1,0 +1,42 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "A simple intro to Docker with Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaunpersad/docker-tutorial.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shaunpersad/docker-tutorial/issues"
+  },
+  "homepage": "https://github.com/shaunpersad/docker-tutorial#readme",
+  "dependencies": {
+    "async": "^2.1.4",
+    "body-parser": "^1.15.2",
+    "elasticsearch": "^12.1.3",
+    "express": "^4.14.0",
+    "lodash": "^4.17.3",
+    "mongoose": "^4.7.5",
+    "react": "^15.4.1",
+    "redis": "^2.6.3"
+  },
+  "devDependencies": {
+    "babel-preset-es2015": "^6.18.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.1",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-uglify": "^2.0.0",
+    "mocha": "^3.2.0",
+    "should": "^11.1.2",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
