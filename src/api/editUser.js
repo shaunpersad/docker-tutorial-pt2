@@ -22,7 +22,7 @@ function editUser(app) {
             _id: userId
         }).exec((err, user) => {
 
-            if (!user) {
+            if (!err && !user) {
                 err = new Error('User not found.');
             }
             if (err) {
