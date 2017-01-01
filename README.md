@@ -55,7 +55,9 @@ In our `docker-compose.yml` file, we will then need to change `node index.js` to
 
 Run `docker-compose build` to rebuild our app image.
 
-With any luck, this will be the **last** time we need to rebuild our image (for a while anyway).
+With any luck, this will be the **last** time we need to rebuild our image (for a while anyway). The next time you'll want to rebuild
+would be if something catastrophic happens and you have to destroy your containers and images. Or, if for some reason you want to
+remove all your `node_modules`, you'll want to create a terminal into your container (more on this later), delete them, exit, and rebuild.
 
 ### Adding a data volume
 
