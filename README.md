@@ -17,11 +17,18 @@ With Docker Compose, all of this will take minutes, and will work across all you
 We will also forego using Docker directly, and use Docker Compose exclusively. Particularly, we will be heavily modifying the `docker-compose.yml` file.
 For further reading on how Docker Compose works with `docker-compose.yml`, go here: https://docs.docker.com/compose/reference/overview/
 
+
 ## Using this tutorial
 
 Using your original project from Part 1, simply follow along on the steps. You will be running several commands and modifying your existing files.
 
 There is no need to clone this repository. Use it as a reference for the completed version only.
+
+
+## Goals
+- To pull together several back-end services to work together in harmony
+- To create an effective workflow that doesn't get in your way
+- To gain a deeper understanding of Docker Compose and how it can help orchestrate complex setups
 
 
 ## Step 1 - A better source-code workflow
