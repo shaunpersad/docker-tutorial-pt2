@@ -202,7 +202,7 @@ For convenience, this command is saved in the `scripts` directory in `app-termin
 
 Now let's start installing!
 ```bash
-npm install async lodash express body-parser mongoose redis elasticsearch react --save
+npm install async lodash express body-parser mongoose redis elasticsearch --save
 ```
 The above are the libraries that our app will need.
 
