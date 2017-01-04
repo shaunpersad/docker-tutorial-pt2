@@ -26,6 +26,7 @@ There is no need to clone this repository. Use it as a reference for the complet
 
 
 ## Goals
+
 - To pull together several back-end services to work together in harmony
 - To create an effective workflow that doesn't get in your way
 - To gain a deeper understanding of Docker Compose and how it can help orchestrate complex setups
@@ -56,7 +57,27 @@ To use Nodemon, we will modify our Dockerfile to add installing Nodemon immediat
 # install nodemon
 RUN npm install -g nodemon
 ```
-Inspect the new Dockerfile in this project, and modify yours accordingly.
+Our final Dockerfile should look like this:
+```Dockerfile
+# Node.js version
+FROM node:6.9.2
+
+# install nodemon
+RUN npm install -g nodemon
+
+# Create app directory
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+# get the npm modules that need to be installed
+COPY package.json /usr/src/app/
+
+# install npm modules
+RUN npm install
+
+# copy the source files from host to container
+COPY . /usr/src/app
+```
 
 In our `docker-compose.yml` file, we will then need to change `node index.js` to `nodemon index.js`.
 
@@ -154,7 +175,7 @@ If you're wondering where to find the names of the images you need, welcome to [
 ### Accessing these services
 
 Typically when you're working with tech like MongoDB, Elasticsearch, and Redis, you'll want to access them to view and modify
-their data directly.  E.g. visualizing your data in a GUI like MongoHub, or running commands in a CLI.
+their data directly.  E.g. visualizing your data in a GUI like [MongoHub](https://github.com/jeromelebel/MongoHub-Mac), or running commands in a CLI.
 
 Even though these services live inside of containers, accessing them is quite easy.
 
