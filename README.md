@@ -270,7 +270,7 @@ A more visual explanation can be found [here](http://jdlm.info/articles/2016/03/
 
 ### Installing
 
- Recall that the command was saved in `scripts/terminal.sh`, so you can run that script directly:
+ Recall that the command for our temporary terminal was saved in `scripts/terminal.sh`, so you can run that script directly:
 ```bash
 sh scripts/terminal.sh
 ```
