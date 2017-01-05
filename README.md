@@ -211,7 +211,7 @@ docker-compose run tutorial-mongo mongo --host tutorial-mongo
 For convenience, this command is saved in the `scripts` directory as `mongo-shell.sh`.
 
 
-## Step 3 - NPM package workflow
+## Step 3 - NPM packages
 
 We will now attempt to install some new packages from NPM. In the first tutorial, we used the official node image to create a terminal to generate the `package.json`. We will take a similar approach to modify the `package.json` file. 
 
