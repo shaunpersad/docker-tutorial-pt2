@@ -13,8 +13,8 @@ const successfulServices = {};
  */
 function healthCheck(services, config, callback) {
 
-    const numTries = _.get(config, 'numTries', 10);
-    const interval = _.get(config, 'interval', 1000);
+    const numTries = _.get(config, 'numTries', 15);
+    const interval = _.get(config, 'interval', 5000);
 
     async.eachSeries(Object.keys(services), (service, callback) => {
 
