@@ -403,6 +403,7 @@ The app we're writing is a web server, so we need to provide it with a port to l
       - '3000:3000'
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
     links:
       - tutorial-mongo
       - tutorial-redis
@@ -437,6 +438,7 @@ services:
       - '3000:3000'
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
     links:
       - tutorial-mongo
       - tutorial-redis
