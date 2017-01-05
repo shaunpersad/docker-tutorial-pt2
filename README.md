@@ -363,7 +363,7 @@ Also notice that in our `docker-compose.yml`, we've got some port definitions to
 It doesn't matter that we're using the default ports in our code (and in the case of Elasticsearch, we actually hard-code it),
 because by default, our containers create their own private network. Only MongoDB and Redis are explicitly accessible
 to the outside world, because we've defined ports on our host to talk to them, but we can change these ports to anything we wish,
-without having to change our source code.
+without having to change our source code. In fact, when we later create a production-ready `docker-compose.yml` file, those publicly exposed ports will go away. They are simply there for now, for development convenience.
 
 For example, for Elasticsearch, we have this:
 ```yaml
