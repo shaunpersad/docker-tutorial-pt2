@@ -264,6 +264,8 @@ How and why does this work? Because a feature of volumes is that [if the contain
 
 And so, specifying the original `node_modules` directory as a volume actually overlays that directory on top the source code volume that we specified, restoring `node_modules` to its original glory.
 
+Notice also that it does not map to anything on our host, it simply needs to mount a volume of existing data.
+
 A more visual explanation can be found [here](http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html#the-nodemodules-volume-trick).
 
 ### Installing
