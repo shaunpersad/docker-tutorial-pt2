@@ -45,7 +45,7 @@ it did not know when files were deleted.
 A data volume is a means of persisting data for a container. It also acts as a shared folder from host to container. In Part 1 we were just copying the source code to the container,
 but now we've given the container a place on our host to access the source directly. This is also beneficial for file watching.
 
-With Vagrant, one of the biggest problems our team begun to have with one of our largest apps was file watching inside of a VM...it was slow. Super slow. 10-30 seconds slow.
+Also, with Vagrant, one of the biggest problems our team begun to have with one of our largest apps was file watching inside of a VM...it was slow. Super slow. 10-30 seconds slow.
 The reason for this slowness was that the VM could not use the host's native OS file watching, and therefore had to poll all of the files it watched.
 
 Docker data volumes don't have this limitation. Nodemon and any other file watchers (which we will implement in Part 3 for our build process) are free to use the host OS's file watching.
@@ -80,12 +80,6 @@ COPY . /usr/src/app
 ```
 
 In our `docker-compose.yml` file, we will then need to change `node index.js` to `nodemon index.js`.
-
-Run `docker-compose build` to rebuild our app image.
-
-With any luck, this will be the **last** time we need to rebuild our image (for a while anyway). The next time you'll want to rebuild
-would be if something catastrophic happens and you have to destroy your containers and images. Or, if for some reason you want to
-remove all your `node_modules`, you'll want to create a terminal into your container (more on this later), delete them, exit, and rebuild.
 
 ### Adding a data volume
 
@@ -193,9 +187,7 @@ The same concept applies to Elasticsearch as it does for MongoDB, except it uses
 
 ##### Redis CLI
 
-Redis is a bit different as we don't necessarily need to access it locally. However, may want to access `redis-cli` in the terminal,
-in order to run commands. To do that, make sure the redis container is already up and running (if you ran `docker-compose up`, then it is),
-then we're going to start *another instance* of that redis container, but execute the `redis-cli` command instead, and have it connect to the already running container:
+Redis is a bit different as we don't necessarily need to access it locally. However, may want to access `redis-cli` in the terminal, in order to run commands. To do that, make sure the redis container is already up and running, then we're going to start *another instance* of that redis container, but execute the `redis-cli` command instead, and have it connect to the already running container:
 ```bash
 docker-compose run tutorial-redis redis-cli -h tutorial-redis
 ```
@@ -219,22 +211,78 @@ docker-compose run tutorial-mongo mongo --host tutorial-mongo
 For convenience, this command is saved in the `scripts` directory as `mongo-shell.sh`.
 
 
-## Step 3 - Installing some new packages
+## Step 3 - NPM package workflow
 
-Now we need to add some new packages from NPM. In the first tutorial, we used the official node image to create a terminal to generate the `package.json`.
-We will take a similar approach, but using our already-built image, so that the modules we install will go directly into the container's volume, and we won't need to rebuild our image:
+We will now attempt to install some new packages from NPM. In the first tutorial, we used the official node image to create a terminal to generate the `package.json`. We will take a similar approach to modify the `package.json` file. 
+
+However, before we do that, we need to do some initial configuration. Why? Because of our use of volumes in Step 1.
+
+### Setup
+
+Here's a breakdown of our current situation:
+- When our image is built, it runs `npm install` based on our `package.json` file, and the copies over our source code into the container. This is all well and good, and is a good method for creating the self-contained image that we want, since, when we later share this image with others, they don't need to have our source code or anything else to run the image.
+- The problem with our image building was that we would have to rebuild the image each time our source code changed, so we implemented a volume that allowed the running container to directly access the source code on our host. In the container's filesystem, the "original" copied source code was overlaid by the files in the mounted volume. This enables us to not have to rebuild our image just to access our latest source code in the container.
+- Now, the _problem_ with our volume _solution_ is that our volume takes everything from our project root and mounts it, including our host's `node_modules`, or lack thereof. Therefore, the original `node_modules` in the container that was built by the image is no longer present when the volume is mounted.
+
+The solution to end all problems is to mount _another_ volume, one which restores the original `node_modules` that results from building the image. We do that in the `docker-compose.yml`:
+```yaml
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+```
+
+Your `docker-compose.yml` should now look like:
+```yaml
+version: '2'
+services:
+  tutorial-mongo:
+    image: mongo:3.4.1
+    ports:
+      - '27017:27017'
+  tutorial-redis:
+    image: redis:3.2.6
+    ports:
+      - '6379'
+  tutorial-elasticsearch:
+    image: elasticsearch:5.1.1
+    ports:
+      - '9200:9200'
+  app:
+    build: .
+    image: shaunpersad/docker-tutorial
+    command: nodemon index.js
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    links:
+      - tutorial-mongo
+      - tutorial-redis
+      - tutorial-elasticsearch
+``` 
+
+How and why does this work? Because a feature of volumes is that [if the container’s base image contains data at the specified mount point, that existing data is copied into the new volume upon volume initialization](https://docs.docker.com/engine/tutorials/dockervolumes/#/data-volumes).
+
+And so, specifying the original `node_modules` directory as a volume actually overlays that directory on top the source code volume that we specified, restoring `node_modules` to its original glory.
+
+A more visual explanation can be found [here](http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html#the-nodemodules-volume-trick).
+
+### Installing
+
+ Recall that the command was saved in `scripts/terminal.sh`, so you can run that script directly:
+```bash
+sh scripts/terminal.sh
+```
+or run the full command:
 ```bash
 docker run -it --rm -v $(pwd):/usr/src/app -w /usr/src/app shaunpersad/docker-tutorial /bin/bash
 ```
-Notice now that the image we are using for the terminal is `shaunpersad/docker-tutorial`.
-
-For convenience, this command is saved in the `scripts` directory in `app-terminal.sh`.
-
 Now let's start installing!
 ```bash
 npm install async lodash express body-parser mongoose redis elasticsearch --save
 ```
-The above are the libraries that our app will need.
+The above are the libraries that our app will need. `exit` when done.
+
+We now have a modified `package.json` file waiting for us on our host.
 
 
 ## Step 4 - A better app
@@ -395,12 +443,14 @@ services:
 
 ## Step 5 - Using the API
 
-Once all the code is in place, it's the moment of truth. Run `docker-compose up`, and watch the magic happen.
+Once all the code is in place, it's the moment of truth. Run `docker-compose up --build`, and watch the magic happen.
+
+Normally, you'll just need to run `docker-compose up`, but since we've already got an existing image from Part 1 named `shaunpersad/docker-tutorial`, and we've made changes to our `Dockerfile` as well as installed new NPM packages, we need to pass in the `--build` flag to alert docker-compose to rebuild the image.
 
 You'll probably see a lot of console output. Containers tend to be noisy on startup, and we've got 3 big technologies all starting up at the same time.
 If everything went according to plan, one of the last outputs you should see should be:
 ```bash
-app_1                     | Listening on 8080.
+app_1 | Listening on 8080.
 ```
 If this is true, hooray, your app is up!
 
@@ -445,6 +495,7 @@ services:
       - '8080:8080'
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
     links:
       - tutorial-mongo
       - tutorial-redis
@@ -483,6 +534,22 @@ curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localho
 Try repeating this request. The second time around should be faster, since it will be cached in Redis.
 
 You get the picture!
+
+
+## Step 6 - Managing node_modules
+
+As was the case with generating the `package.json` file in Part 1, the intent of using the temporary terminal in Step 3 was to not rely
+on having Node or NPM available on our host just to run a node/npm command. However, the side effect of what we've done at the start of Step 3
+is that now we have some modules "physically" present in our `node_modules` directory on our host. Our Dockerfile ignores `node_modules` (thanks to the `.dockerignore` we set up in Part 1) on our host, and builds its own `node_modules` from the information in `package.json`, so these host modules are effectively meaningless, and can be ignored (or removed if you're a bit OCD).
+
+Now, whenever we update our `package.json` (either we install new modules ourselves as described in Step 3, or we `git pull` and find that we have an updated `package.json`, or simply modify `package.json` manually), we will need to stop whatever's currently running, and rebuild our image.
+
+We can accomplish that with the following commands:
+```bash
+docker-compose down
+docker-compose up --build
+```
+This will effectively be the only times you need to rebuild your image in your workflow, unless there happen to be new changes to your `Dockerfile`.
 
 
 ## Congratulations!
