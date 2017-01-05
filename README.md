@@ -43,7 +43,7 @@ Nodemon listens for changes to your source code, and reloads your app. It even k
 it did not know when files were deleted.
 
 A data volume is a means of persisting data for a container. It also acts as a shared folder from host to container. In Part 1 we were just copying the source code to the container,
-but now we've given the container a place on our host to access the source directly. This is also beneficial for file watching.
+but now we're going to give the container a place on our host to access the source directly. This is also beneficial for file watching.
 
 Also, with Vagrant, one of the biggest problems our team begun to have with one of our largest apps was file watching inside of a VM...it was slow. Super slow. 10-30 seconds slow.
 The reason for this slowness was that the VM could not use the host's native OS file watching, and therefore had to poll all of the files it watched.
