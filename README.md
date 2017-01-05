@@ -289,7 +289,7 @@ We now have a modified `package.json` file waiting for us on our host.
 
 ## Step 4 - A better app
 
-We're going to create a "simple" registry of people. We should be able to add, search for, and display people. 
+In a far cry from our original "Hello World!" app, we're now going to create a "simple" registry of people. We should be able to add, search for, and display people. 
 We will submit people via a form, send it to an express app, which will then save it in MongoDB, and mirror it in Elasticsearch.
 Whenever we search for someone, the express app will hit Elasticsearch for the results, and cache it in Redis. With this simplistic of an app,
 MongoDB is playing a fairly useless middleman, though in real apps that usually is not the case, as you tend to not want Elasticsearch
