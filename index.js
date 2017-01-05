@@ -93,7 +93,7 @@ utils.healthCheck(services, {}, (err, services) => {
         res.send('Hello World!')
     });
 
-    app.listen(8080, () => {
+    app.listen(3000, () => {
         console.log('Listening...');
     });
 });

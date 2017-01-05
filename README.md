@@ -391,7 +391,7 @@ The gist of what happens is as follows:
 
 ### Exposing a port
 
-The app we're writing is a web server, so we need to provide it with a port to listen to. The source code in `index.js` is asking for 8080, so let's give it:
+The app we're writing is a web server, so we need to provide it with a port to listen to. The source code in `index.js` is asking for 3000, so let's give it:
 ```yaml
   app:
     build: .
@@ -400,7 +400,7 @@ The app we're writing is a web server, so we need to provide it with a port to l
     environment:
       NODE_ENV: development
     ports:
-      - '8080:8080'
+      - '3000:3000'
     volumes:
       - .:/usr/src/app
     links:
@@ -434,7 +434,7 @@ services:
     environment:
       NODE_ENV: development
     ports:
-      - '8080:8080'
+      - '3000:3000'
     volumes:
       - .:/usr/src/app
     links:
@@ -452,11 +452,11 @@ Normally, you'll just need to run `docker-compose up`, but since we've already g
 You'll probably see a lot of console output. Containers tend to be noisy on startup, and we've got 3 big technologies all starting up at the same time.
 If everything went according to plan, one of the last outputs you should see should be:
 ```bash
-app_1 | Listening on 8080.
+app_1 | Listening...
 ```
 If this is true, hooray, your app is up!
 
-Navigate to `http://localhost:8080`, and you'll be presented with our old friend "Hello world!".
+Navigate to `http://localhost:3000`, and you'll be presented with our old friend "Hello world!".
 
 At this point, you may want to turn off the extra logs from the other noisy containers. You can do that with:
 ```yaml
@@ -494,7 +494,7 @@ services:
     environment:
       NODE_ENV: development
     ports:
-      - '8080:8080'
+      - '3000:3000'
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -510,28 +510,28 @@ Now you're free to try out the API. Fire up [Postman](https://www.getpostman.com
 
 We've got no data, so let's make some.
 
-URL: http://localhost:8080/users/create BODY: firstName = Shaun, lastName = Persad
+URL: http://localhost:3000/users/create BODY: firstName = Shaun, lastName = Persad
 ```bash
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'firstName=Shaun&lastName=Persad' "http://localhost:8080/users/create"
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'firstName=Shaun&lastName=Persad' "http://localhost:3000/users/create"
 ```
 
 #### Get all users
-URL: http://localhost:8080/users
+URL: http://localhost:3000/users
 ```bash
-curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localhost:8080/users"
+curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localhost:3000/users"
 ```
 Try repeating this request. The second time around should be faster, since it will be cached in Redis.
 
 #### Create another user
-URL: http://localhost:8080/users/create BODY: firstName = Tim, lastName = Coker
+URL: http://localhost:3000/users/create BODY: firstName = Tim, lastName = Coker
 ```bash
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'firstName=Tim&lastName=Coker' "http://localhost:8080/users/create"
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'firstName=Tim&lastName=Coker' "http://localhost:3000/users/create"
 ```
 
 #### Search users
-URL: http://localhost:8080/users QUERY: search = Sh
+URL: http://localhost:3000/users QUERY: search = Sh
 ```bash
-curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localhost:8080/users?search=sh"
+curl -X GET -H "Content-Type: application/x-www-form-urlencoded" "http://localhost:3000/users?search=sh"
 ```
 Try repeating this request. The second time around should be faster, since it will be cached in Redis.
 
